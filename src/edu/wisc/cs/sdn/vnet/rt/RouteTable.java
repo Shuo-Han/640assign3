@@ -1,5 +1,5 @@
 package edu.wisc.cs.sdn.vnet.rt;
-
+import java.util.*;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -28,6 +28,10 @@ public class RouteTable
 	public RouteTable()
 	{ this.entries = new LinkedList<RouteEntry>(); }
 	
+	public List<RouteEntry> getEntries() {
+    return this.entries;
+	}
+	
 	/**
 	 * Lookup the route entry that matches a given IP address.
 	 * @param ip IP address
@@ -36,28 +40,47 @@ public class RouteTable
 	public RouteEntry lookup(int ip)
 	{
 		synchronized(this.entries)
-        {
-			/*****************************************************************/
-			/* TODO: Find the route entry with the longest prefix match      */
+      {	
+				// a subnetMask is a 32-bit number that masks an IP address,
+				// and divides the IP address into network address and host address.
+				// subnetMask is made by setting network bits to all "1"s and setting host bits to all "0"s 
+				// within a given network, two host addresses are reserved for special purpose, 
+				// and cannot be assigned to hosts. 
 			
-	        RouteEntry bestMatch = null;
-	        for (RouteEntry entry : this.entries)
-	        {
-	           int maskedDst = ip & entry.getMaskAddress();
-	           int entrySubnet = entry.getDestinationAddress() 
-	               & entry.getMaskAddress();
-	           if (maskedDst == entrySubnet)
-	           {
-	        	   if ((null == bestMatch) 
-	        		   || (entry.getMaskAddress() > bestMatch.getMaskAddress()))
-	        	   { bestMatch = entry; }
-	           }
+				// subnetting an IP network is to separate a big network into smaller multiple networks 
+				// for reorganization and security purposes. 
+				// applying a subnet mask to an IP address separates network address from host address. 
+				// the network bits are represented by the 1's in the mask, 
+				// and the host bits are represented by 0's. 
+				// performing a bitwise logical AND operation on the IP address with the subnet mask 
+				// produces the network address. For example, applying a subnet mask to an IP address 
+				// 216.3.128.12 produces the following network address:
+				// IP:   1101 1000 . 0000 0011 . 1000 0000 . 0000 1100  (216.003.128.012)
+				// Mask: 1111 1111 . 1111 1111 . 1111 1111 . 0000 0000  (255.255.255.000)
+			  //    ---------------------------------------------
+				//       1101 1000 . 0000 0011 . 1000 0000 . 0000 0000  (216.003.128.000)
+				
+				RouteEntry res = null;
+				Iterator<RouteEntry> entryItr = entries.iterator();
+	      while (entryItr.hasNext()) {
+	        RouteEntry RE = entryItr.next();
+	        int destinationAddress = RE.getDestinationAddress();
+	        int subMask = RE.getMaskAddress();
+	        int subnetAddress = destinationAddress & subMask;
+	        if (subnetAddress == (ip & subMask) ) {
+	          if (res == null) {
+	          	res = RE;
+	          } else if(subMask > res.getMaskAddress()){
+	        	  res = RE;
+	          }
 	        }
-			
-			return bestMatch;
-			
-			/*****************************************************************/
-        }
+	      }
+	      
+	      if (res != null) {
+	      	System.out.println("RouteTable.lookup found, RouteEntry: " + res.toString());
+	      }
+	      return res;
+      }
 	}
 	
 	/**
