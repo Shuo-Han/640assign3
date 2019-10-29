@@ -310,6 +310,9 @@ public class Router extends Device {
 		if (arpPacket.getOpCode() == ARP.OP_REQUEST) {
 			// save the sender ip-mac info in the arpCache
 			int senderIP = IPv4.toIPv4Address(arpPacket.getSenderProtocolAddress());
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!");
+			System.out.println("handling request: " + senderIP + inIface.getIpAddress());
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!");
 			MACAddress senderMAC = MACAddress.valueOf(arpPacket.getSenderHardwareAddress());
 			arpCache.insert(senderMAC, senderIP);
 
@@ -332,6 +335,9 @@ public class Router extends Device {
 			MACAddress senderMAC = MACAddress.valueOf(arpPacket.getSenderHardwareAddress());
 			arpCache.insert(senderMAC, senderIP);
 			// remove all the packets in the corresponding queue
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!");
+			System.out.println("handling reply: " + senderIP + inIface.getIpAddress());
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!");
 			LinkedList<Ethernet> pacs = PacWaitMAC.get(senderIP);
 			if (!pacs.isEmpty()) {
 				for (Ethernet pac : pacs) {
